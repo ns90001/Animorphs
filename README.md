@@ -1,16 +1,17 @@
 # __Animorphs__
 
 ## __Project Outline__ 
-Our goal is to make a model architecture that can morph one object into another. We input two images (start and goal image) and output and the main task of our model is to use their latent space vectors of the two images to come up with intermediary latent vectors. We then use the latent vectors to generate intermediate images. Finally, we will string together the start, intermediate images, and goal image to make a smooth .gif-like animation.
+- Our goal is to make a model architecture that can morph one object into another. We input two images (start and goal image) and the main task of our model is to use their latent space vectors of the two images to come up with intermediary latent vectors. Using these intermediary latent vectors, we create intermediary images by passing them into the StyleGAN. Finally, we will string together the start, intermediate images, and goal image to make a smooth .gif-like animation. 
+- We prepared four datasets (each capturing different objects) to test our model on. We will first start with human faces, then Wikiart, then cars, and finally cats.
 
 ## __Model Architecture__ 
-For this project, we mainly used two models, styleGAN and styleGAN2.
+For this project, we mainly use StyleGAN.
 ### __Style Generative Adversarial Network(styleGAN)__
-The first model we used for human faces dataset and WikiArt dataset is styleGAN created by NVIDIA. The model has the following architecture:
+For the four objects, we use the StyleGAN created by NVIDIA. The model has the following architecture:
 
 ![](./data/model_img/styleGAN_model.png)
 
-Unlike traditional GAN where we get the latent vector from feed forward network, styleGAN gets the latent vector by using two different networks, mapping network and synthesis network. For the mapping network, style-based Generator uses 8-layer MLP. The output from the mapping network is a vector that defines the styles that is integrated at each point in the generator model via a new layer called adaptive instance normalization(AdaIN), which is defined as:
+Unlike traditional GAN where we get the latent vector from feed forward network, the StyleGAN gets the latent vector by using two different networks, mapping network and synthesis network. For the mapping network, style-based Generator uses 8-layer MLP. The output from the mapping network is a vector that defines the styles that is integrated at each point in the generator model via a new layer called adaptive instance normalization(AdaIN), which is defined as:
 $$\begin{align}
 AdaIN(x_{i}, y) = y_{s,i} \frac{x_{i}-\mu(x_{i})}{\sigma(x_i)} + y_{b,i}
 \end{align}$$ 
@@ -21,7 +22,7 @@ This unique architecture allows us to have a control over the style of generated
 
 ## __Dataset__
 ### __Human Faces Dataset__
-- For human faces, we take advantage of the pre-trained styleGAN model built by NVIDIA. Since we can generate an image from any vector now, the image generation part was taken care of. Now we had to encode our start and goal images to obtain the intermediary latent vectors. We try to approximate using two methods.
+- For human faces, we take advantage of the pre-trained StyleGAN model built by NVIDIA. Since we can generate an image from any vector now, the image generation part was taken care of. Now we had to encode our start and goal images into the latent space of the StyleGAN to obtain the intermediary latent vectors. We try to approximate using two methods.
 #### __Latent Vector Approximation using MSE__
 - This is our first naive approach where the steps are described below.
   1. Initialize a random vector, $w$, of dimension $[1, 18, 512]$ and minimal loss vector $w_{min}$ of same dimension to $\vec{0}$ (only in the first iteration)
@@ -38,11 +39,11 @@ This unique architecture allows us to have a control over the style of generated
 ![](./data/model_img/model_arch.png) 
 - The steps are:
   - You pass in an image to the encoder, $E$, and it outputs a latent vector, $w$, and $N$ offsets (for face $N=18$, which is the size of second dimension), $\delta$. We combine these two 
-  and pass it into the generator $G$ of pretrained styleGAN model.
+  and pass it into the generator $G$ of the pre-trained StyleGAN model.
   - We again compute the MSE loss of the original image and generated image. However, at the same time, we also set the loss for our offsets $\delta$ and we try to minimize these two losses.
   - We update the learnable parameters in the encoder, $E$.
   
-- With this method the following results were achieved:
+- With this method the following results were achieved in less than 3 seconds:
 ![](./data/human/e4e.png)  
 
 
@@ -81,8 +82,36 @@ The image below is the result of this approach
 <img src = './data/cat/rnd_cat5.png' width=250>
 <img src = './data/cat/rnd_cat6.png' width=250>
 </p>
+
 - As we can observe, although we can tell it is an image of an cat, some images are very distorted
+
+- Since the StyleGAN for cat dataset was trained on low resolution images, we were able to do some experiments on how well we will be able to approximate the latent vector of any image we selected. Here again, we will use the brute force method whereby we loop for certain steps and try to minimize the MSE loss between $w$ and $w_{G(w)}$. 
+- Here are the two images we selected:
+<p align = 'center'>
+<img src = './data/cat/cat1_post.jpg' width=250>
+<img src = './data/cat/cat2_post.jpg' width=250>
+</p>
+
+- For different number of steps(500, 1000, and 1500) we attempted to approximate these two images.
+
+__500 steps__
+<p align='center'>
+<img src = './data/cat/approx_step_500.png' width = 250>
+</p>
+
+__1000 steps__
+<p align='center'>
+<img src = './data/cat/approx_step_1000.png' width = 250>
+</p>
+
+__1500 steps__
+<p align='center'>
+<img src = './data/cat/approx_step_1500.png' width = 250>
+</p>
+
+- We can clearly see that as we increase the number of generate images to explore, the better the resulting approximated images are. For 500 steps, we see objects that share the same color and general contour with the two images we selected, but they cannot be considered as cats. For 1000 steps, the approximated images look very much like the cats we inputted. However, minor details such as the shape of the face and the skin pattern are a little bit off. Finally for 1500 steps, the approximated images really look like the input cats, in that it captures small details like the eye color very well.
 ## Morphing 
+
 - To be able to morph from one image to another, we researched ways to combine latent vectors. We decided to use linear interpolation to calculate intermediary vectors between two image coordinates. The formula for `linear interpolation` is defined as such:
 $$\begin{align}
 w_i = \alpha w_1 + (1-\alpha) w_2
@@ -217,4 +246,14 @@ result morphing
 <p align='center'>
 <img src = './data/cat/morph2_cat.gif'
 width=250>
+</p>
+
+__Morphing 3__:
+Our third morphing is made using approximated images from our input images. 
+We provide three morphings(one each for 500, 1000, and 1500 steps).
+<p align='center'>
+<img src = './data/cat/approx_step_500_res.gif'
+width=250>
+<img src = './data/cat/approx_step_1000_res.gif' width = 250>
+<img src = './data/cat/approx_step_1500_res.gif' width = 250>
 </p>
