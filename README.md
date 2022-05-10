@@ -1,5 +1,6 @@
 # __Animorphs__
-
+- More detailed info could be found in our paper
+[here](./Animorphs_paper.pdf)
 ## __Project Outline__ 
 - Our goal is to make a model architecture that can morph one object into another. We input two images (start and goal image) and the main task of our model is to use their latent space vectors of the two images to come up with intermediary latent vectors. Using these intermediary latent vectors, we create intermediary images by passing them into the StyleGAN. Finally, we will string together the start, intermediate images, and goal image to make a smooth .gif-like animation. 
 - We prepared four datasets (each capturing different objects) to test our model on. We will first start with human faces, then Wikiart, then cars, and finally cats.
@@ -131,12 +132,19 @@ w_i = \alpha w_1 + (1-\alpha) w_2
 - where $\alpha$ is the interpolation factor and $w_i$ is the interpolation vector. ($w_1$ and $w_2$ are the two latent vectors, one for start image and the other for goal image.) By running the generator on several $\alpha$ values, we can get same number of intermediary images, and by connecting them, obtain a smooth animation. 
 
 ### __Human Face Morphing__
-- Using the 5 approximated images obtained in the naive method for Human Face, the following morphing was achieved:
-  
+- We now demonstrate the morphing of the following two human faces.
+start and end images
 <p align='center'>
-<img src = './data/human/Kenta_in_styleGAN.gif'>
+<img src = './data/human/02.jpg'
+width=250>
+<img src = './data/human/end_human.jpg'
+width=250>
 </p>
-
+- The below comparison shows the morphings obtained by two different encoding techniques. The left morphing is the one obtained by using MSE and the right one e4e.
+<p align = 'center'>
+<img src = './data/human/mse_gif.gif' width = 250>
+<img src = './data/human/e4e_gif.gif' width = 250>
+</p>
 - Additionally, with encoder4editor, we were now able to explore the latent space of the human faces dataset and 'edit' our image in certain directions. For our project, we have made it so that we can edit `age`, `pose`, and `age + pose` attributes.
 
 Moving in `age` direction:
@@ -219,9 +227,9 @@ Approximated Morphing
 
 ### __Car Morphing__:
 
-- The following three morphings were achieved using the StyleGAN cat model published by NVIDIA.
-- The first two morphings are morphing from a randomly generated image to another randomly generated image.
-- 
+- The following morphings were achieved using the StyleGAN cat model published by NVIDIA.
+- The two morphings are morphing from a randomly generated image to another randomly generated image.
+
 __Morphing 1__:
 start and end images
 <p align='center'>
